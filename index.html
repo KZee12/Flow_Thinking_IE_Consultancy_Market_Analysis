@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow Thinking Consultancy - Market Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase Imports -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            @apply px-3 py-2 rounded-md text-sm font-medium text-stone-700 hover:bg-stone-100 hover:text-emerald-700 transition-colors;
+        }
+        .nav-link.active {
+            @apply bg-emerald-50 text-emerald-700;
+        }
+        section {
+            @apply w-full py-16 sm:py-20;
+        }
+        .tab-btn {
+            @apply px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 border-transparent text-stone-600 hover:text-emerald-700;
+        }
+        .tab-btn.active {
+            @apply border-emerald-600 text-emerald-700;
+        }
+        .swot-card {
+            @apply bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300;
+        }
+        .swot-card-header {
+            @apply p-4 cursor-pointer;
+        }
+        .swot-card-body {
+            @apply px-4 pb-4 transition-all duration-300;
+        }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #059669;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 antialiased">
+
+    <!-- 
+    Chosen Palette: Emerald & Stone
+    Application Structure Plan: A single-page, vertical-scrolling dashboard structure with a sticky navigation header. This design was chosen for its simplicity and directness, allowing the user (the consultant) to flow from one strategic section to the next: 1. Executive Summary, 2. The Core Niche ("Flow Thinking"), 3. The Target Market (Indian Manufacturing), 4. The Go-to-Market Strategy, and 5. The SWOT Analysis.
+    
+    Visualization & Content Choices:
+    - Key Metrics (Section 1): Goal: Inform. Viz: Styled HTML cards. Interaction: None.
+    - "Flow Thinking" Diagram (Section 2): Goal: Organize/Explain + AI Interaction. Viz: HTML/CSS flexbox diagram + AI Form. Interaction: JS-driven simulation AND Gemini API "Diagnostician" to analyze custom Inflow/Outflow data. Justification: Moves from abstract simulation to concrete AI-powered advice.
+    - Market Sectors Chart (Section 3): Goal: Inform/Compare + AI Interaction. Viz: Chart.js Bar Chart. Interaction: Selector updates text AND Gemini API "Pitch Generator" drafts outreach emails. Justification: Turns market data into actionable sales assets immediately.
+    - GTM Strategy (Section 4): Goal: Organize. Viz: HTML/CSS Tabbed interface. Interaction: Tab switching.
+    - SWOT Analysis (Section 5): Goal: Organize/Inform. Viz: 2x2 HTML/CSS grid. Interaction: Toggles.
+    
+    CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+
+    <header class="sticky top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
+        <nav class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <span class="text-xl font-bold text-emerald-700">Flow Thinking Consultancy</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#home" class="nav-link active" onclick="scrollToSection('home', this)">Home</a>
+                        <a href="#niche" class="nav-link" onclick="scrollToSection('niche', this)">The Niche & AI</a>
+                        <a href="#market" class="nav-link" onclick="scrollToSection('market', this)">Market</a>
+                        <a href="#gtm" class="nav-link" onclick="scrollToSection('gtm', this)">GTM Strategy</a>
+                        <a href="#swot" class="nav-link" onclick="scrollToSection('swot', this)">SWOT</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="home">Home</option>
+                        <option value="niche">The Niche</option>
+                        <option value="market">Market</option>
+                        <option value="gtm">GTM Strategy</option>
+                        <option value="swot">SWOT</option>
+                    </select>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-10">
+
+        <section id="home" class="pt-10 text-center">
+            <h1 class="text-4xl font-bold tracking-tight text-stone-900 sm:text-5xl">Market Analysis: IE Consultancy</h1>
+            <p class="mt-4 text-xl text-stone-600">Strategic research for launching an Industrial Engineering consultancy in India, focusing on the "Flow Thinking" niche.</p>
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-lg font-semibold text-emerald-700">The Niche: Flow Thinking</h3>
+                    <p class="mt-2 text-stone-600">A unique methodology defining profit as the result of a minimal delta between production (inflow) and sales (outflow), targeting core manufacturing inefficiencies.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-lg font-semibold text-emerald-700">Target Market: Indian Manufacturing</h3>
+                    <p class="mt-2 text-stone-600">A rapidly expanding sector, driven by "Make in India" and PLI schemes, yet rife with opportunities for operational efficiency improvements.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-lg font-semibold text-emerald-700">Core Problem to Solve</h3>
+                    <p class="mt-2 text-stone-600">High inventory, cash flow traps, overproduction, and stockouts. "Flow Thinking" provides a mathematical model to diagnose and solve these issues.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="niche" class="bg-white rounded-xl shadow-lg p-6 sm:p-10">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-stone-900">The "Flow Thinking" Niche</h2>
+                <p class="mt-2 text-lg text-stone-600 max-w-3xl mx-auto">This section details the core concept of "Flow Thinking." It's an operational model where optimal profit is achieved when the rate of value creation (Inflow) perfectly matches the rate of value delivery (Outflow).</p>
+            </div>
+            
+            <div class="mt-12">
+                <!-- Visual Simulation -->
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg text-center w-full md:w-1/4">
+                        <h4 class="text-lg font-semibold text-blue-800">INFLOW</h4>
+                        <p class="text-sm text-blue-600">Production Rate</p>
+                    </div>
+                    <div class="text-4xl font-bold text-stone-500 hidden md:block">&rarr;</div>
+                    <div class="p-4 bg-stone-50 border-2 border-stone-300 rounded-lg text-center w-full md:w-1/2" id="flow-status-box">
+                        <h4 class="text-lg font-semibold text-stone-800" id="flow-status-title">PROCESS & INVENTORY</h4>
+                        <p class="text-sm text-stone-600" id="flow-status-delta">Delta: (Inflow - Outflow)</p>
+                    </div>
+                    <div class="text-4xl font-bold text-stone-500 hidden md:block">&rarr;</div>
+                    <div class="p-4 bg-green-50 border-2 border-green-300 rounded-lg text-center w-full md:w-1/4">
+                        <h4 class="text-lg font-semibold text-green-800">OUTFLOW</h4>
+                        <p class="text-sm text-green-600">Sales Rate</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap justify-center gap-4 border-b border-stone-200 pb-8">
+                    <button class="px-5 py-2 rounded-full bg-red-100 text-red-700 font-semibold text-sm hover:bg-red-200 transition-colors" onclick="simulateFlow('over')">Demo: Overproduction</button>
+                    <button class="px-5 py-2 rounded-full bg-amber-100 text-amber-700 font-semibold text-sm hover:bg-amber-200 transition-colors" onclick="simulateFlow('under')">Demo: Stockouts</button>
+                    <button class="px-5 py-2 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-sm hover:bg-emerald-200 transition-colors" onclick="simulateFlow('balanced')">Demo: Balanced</button>
+                </div>
+
+                <!-- AI Feature Area -->
+                <div class="mt-8 bg-gradient-to-r from-emerald-50 to-stone-50 p-6 rounded-xl border border-emerald-100">
+                    <h3 class="text-xl font-bold text-emerald-800 mb-4 flex items-center gap-2">
+                        <span>✨</span> AI Flow Diagnostician
+                    </h3>
+                    <p class="text-sm text-stone-600 mb-4">Enter custom data below. The AI will analyze the "Delta" and provide a 3-step Industrial Engineering prescription.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-500 uppercase">Inflow (Units/Day)</label>
+                            <input type="number" id="input-inflow" placeholder="e.g. 1000" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-stone-500 uppercase">Outflow (Units/Day)</label>
+                            <input type="number" id="input-outflow" placeholder="e.g. 850" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="runAiDiagnosis()" class="w-full bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                <span id="btn-spinner-1" class="loader hidden"></span>
+                                <span>✨ Analyze Delta</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="ai-diagnosis-result" class="hidden bg-white p-4 rounded-lg border border-emerald-200 text-stone-700 text-sm leading-relaxed shadow-sm">
+                        <!-- AI content goes here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="market">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-stone-900">Market Opportunity: Indian Manufacturing</h2>
+                <p class="mt-2 text-lg text-stone-600 max-w-3xl mx-auto">This section covers the target market. Explore sectors and use the AI tool to draft sector-specific outreach messages.</p>
+            </div>
+
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4">Target Sector Analysis</h3>
+                    <label for="sector-select" class="block text-sm font-medium text-stone-700">Select a sector to explore:</label>
+                    <select id="sector-select" class="mt-1 block w-full py-2 px-3 border border-stone-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                        <option value="default">General Challenges</option>
+                        <option value="auto">Automotive</option>
+                        <option value="pharma">Pharmaceuticals</option>
+                        <option value="textiles">Textiles & Apparel</option>
+                        <option value="fmcg">FMCG</option>
+                        <option value="electronics">Electronics</option>
+                    </select>
+                    
+                    <div id="challenge-text" class="mt-6 p-4 bg-stone-50 rounded-lg min-h-[150px] text-sm mb-4">
+                    </div>
+
+                    <!-- AI Pitch Generator -->
+                    <div class="border-t border-stone-200 pt-4">
+                         <h4 class="text-sm font-bold text-stone-800 mb-2 flex items-center gap-2">
+                            <span>✨</span> Outreach Generator
+                        </h4>
+                        <p class="text-xs text-stone-500 mb-3">Generate a cold LinkedIn message for a Plant Head in this sector, focusing on the pain points above.</p>
+                        <button onclick="generateAiPitch()" class="w-full bg-stone-800 text-white px-4 py-2 rounded-md hover:bg-stone-900 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm">
+                            <span id="btn-spinner-2" class="loader hidden"></span>
+                            <span>✨ Draft Pitch for Selected Sector</span>
+                        </button>
+                        <div id="ai-pitch-result" class="hidden mt-3 bg-stone-100 p-3 rounded border border-stone-200 font-mono text-xs text-stone-700 whitespace-pre-wrap"></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-center">Key Manufacturing Sectors (GVA Contribution)</h3>
+                    <div class="chart-container">
+                        <canvas id="marketChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="gtm" class="bg-white rounded-xl shadow-lg p-6 sm:p-10">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-stone-900">Go-to-Market (GTM) Strategy</h2>
+                <p class="mt-2 text-lg text-stone-600 max-w-3xl mx-auto">This section details your proposed multi-channel strategy to build thought leadership, generate leads, and establish academic credibility for the "Flow Thinking" methodology.</p>
+            </div>
+
+            <div class="mt-10">
+                <div class="border-b border-stone-200">
+                    <nav class="-mb-px flex justify-center space-x-6" aria-label="Tabs">
+                        <button class="tab-btn active" id="tab-btn-content" onclick="changeTab('content')">Content Marketing</button>
+                        <button class="tab-btn" id="tab-btn-education" onclick="changeTab('education')">Education & Workshops</button>
+                        <button class="tab-btn" id="tab-btn-research" onclick="changeTab('research')">Academic Research</button>
+                    </nav>
+                </div>
+
+                <div class="mt-8">
+                    <div id="tab-content-content" class="tab-pane">
+                        <h3 class="text-xl font-semibold text-emerald-700">Pillar 1: Content Marketing (Awareness)</h3>
+                        <p class="mt-2 text-stone-600">Establish thought leadership and attract an audience by consistently publishing high-quality, practical content.</p>
+                        <ul class="mt-4 list-disc list-inside space-y-2 text-stone-600">
+                            <li><strong>LinkedIn:</strong> Share case studies, professional insights, and workshop announcements. Target decision-makers (COOs, Plant Heads, SCM Heads).</li>
+                            <li><strong>Twitter:</strong> Post bite-sized "Flow Thinking" principles, engage in industry conversations, and share quick data visualizations.</li>
+                            <li><strong>Medium / Substack:</strong> Publish long-form articles and "how-to" guides, building a direct subscriber base for deeper engagement.</li>
+                        </ul>
+                    </div>
+                    <div id="tab-content-education" class="tab-pane hidden">
+                        <h3 class="text-xl font-semibold text-emerald-700">Pillar 2: Education & Workshops (Consideration)</h3>
+                        <p class="mt-2 text-stone-600">Convert audience members into qualified leads by offering high-value educational experiences.</p>
+                        <ul class="mt-4 list-disc list-inside space-y-2 text-stone-600">
+                            <li><strong>Online Webinars:</strong> Scalable, low-cost way to introduce "Flow Thinking" to a broad audience. Excellent for lead capture.</li>
+                            <li><strong>In-Person Workshops:</strong> Paid, hands-on workshops for manufacturing clusters (e.g., Pune, Chennai, Gurgaon). Provides deep engagement and high-quality leads.</li>
+                            <li><strong>Corporate Training:</strong> Tailored workshops for specific companies, acting as a "foot-in-the-door" for larger consulting projects.</li>
+                        </ul>
+                    </div>
+                    <div id="tab-content-research" class="tab-pane hidden">
+                        <h3 class="text-xl font-semibold text-emerald-700">Pillar 3: Academic Research (Credibility)</h3>
+                        <p class="mt-2 text-stone-600">Build a defensible moat and deep credibility by formalizing "Flow Thinking" as a rigorous, mathematical methodology.</p>
+                        <ul class="mt-4 list-disc list-inside space-y-2 text-stone-600">
+                            <li><strong>Publish Papers:</strong> Solve real-world industrial problems (e.g., inventory optimization, supply chain resilience) using "Flow Thinking" mathematics.</li>
+                            <li><strong>Target Journals:</strong> Aim for IE, Operations Management, and Supply Chain journals.</li>
+                            <li><strong>Leverage in Marketing:</strong> Use "Proprietary, research-backed methodology" in all marketing materials to differentiate from "soft" consultancies.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="swot">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-stone-900">SWOT Analysis</h2>
+                <p class="mt-2 text-lg text-stone-600 max-w-3xl mx-auto">An analysis of the Strengths, Weaknesses, Opportunities, and Threats for your proposed "Flow Thinking" consultancy. Click each quadrant to expand and see the detailed points.</p>
+            </div>
+
+            <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="swot-card">
+                    <div class="swot-card-header bg-green-50" onclick="toggleSwot('strengths')">
+                        <h3 class="text-xl font-semibold text-green-800">Strengths</h3>
+                        <span class="text-sm text-green-600">Click to expand/collapse</span>
+                    </div>
+                    <div id="swot-body-strengths" class="swot-card-body hidden">
+                        <ul class="list-disc list-inside space-y-2 text-stone-600">
+                            <li><strong>Unique Niche:</strong> "Flow Thinking" is a memorable, brandable concept.</li>
+                            <li><strong>Addresses Core Pain:</strong> Directly targets profit-leaks from inventory and cash flow, which are high-priority for any manufacturer.</li>
+                            <li><strong>Credibility Strategy:</strong> Plan to back the niche with academic research creates a strong differentiator.</li>
+                            <li><strong>Scalable GTM:</strong> Digital content and workshops are highly scalable for lead generation.</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="swot-card">
+                    <div class="swot-card-header bg-red-50" onclick="toggleSwot('weaknesses')">
+                        <h3 class="text-xl font-semibold text-red-800">Weaknesses</h3>
+                        <span class="text-sm text-red-600">Click to expand/collapse</span>
+                    </div>
+                    <div id="swot-body-weaknesses" class="swot-card-body hidden">
+                        <ul class="list-disc list-inside space-y-2 text-stone-600">
+                            <li><strong>New Concept:</strong> "Flow Thinking" is unknown. Requires significant educational effort vs. established terms like "Lean" or "Six Sigma".</li>
+                            <li><strong>Consulting Scalability:</strong> (Assuming) solo consultant. Delivery of projects is a time bottleneck.</li>
+                            <li><strong>Long Lead Time:</strong> Academic research has a very long cycle time and may not produce commercial leads quickly.</li>
+                            <li><strong>Perception Risk:</strong> Could be perceived as "old wine in a new bottle" if not differentiated clearly from Lean/TOC.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="swot-card">
+                    <div class="swot-card-header bg-blue-50" onclick="toggleSwot('opportunities')">
+                        <h3 class="text-xl font-semibold text-blue-800">Opportunities</h3>
+                        <span class="text-sm text-blue-600">Click to expand/collapse</span>
+                    </div>
+                    <div id="swot-body-opportunities" class="swot-card-body hidden">
+                        <ul class="list-disc list-inside space-y-2 text-stone-600">
+                            <li><strong>"Make in India" / PLI:</strong> Government push for manufacturing efficiency and global competitiveness creates high demand for IE.</li>
+                            <li><strong>SME Market:</strong> High-growth SMEs need IE expertise but often cannot afford full-time departments or "Big 4" consultants.</li>
+                            <li><strong>Digital Transformation:</strong> Industry 4.0 adoption generates more data, making "Flow" analysis more precise and valuable.</li>
+                            <li><strong>Supply Chain Volatility:</strong> Post-pandemic focus on resilient and efficient supply chains is a perfect entry point for "Flow Thinking".</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="swot-card">
+                    <div class="swot-card-header bg-amber-50" onclick="toggleSwot('threats')">
+                        <h3 class="text-xl font-semibold text-amber-800">Threats</h3>
+                        <span class="text-sm text-amber-600">Click to expand/collapse</span>
+                    </div>
+                    <div id="swot-body-threats" class="swot-card-body hidden">
+                        <ul class="list-disc list-inside space-y-2 text-stone-600">
+                            <li><strong>Strong Competition:</strong> Established Lean, Six Sigma, and TOC consultancies (from boutiques to large firms) are already in the market.</li>
+                            <li><strong>Client Inertia:</strong> Manufacturing culture can be resistant to change ("this is how we've always done it").</li>
+                            <li><strong>Economic Downturn:</strong> Consulting budgets are often the first to be cut during a recession.</li>
+                            <li><strong>Broadness of "Manufacturing":</strong> The space is vast; lack of focus on a sub-sector (e.g., "Auto") could dilute marketing efforts.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-10 border-t border-stone-200">
+        <p class="text-sm text-stone-500">Interactive Strategy Report | Generated 2025</p>
+    </footer>
+
+    <script>
+        const apiKey = ""; // Runtime-provided API key
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initMarketChart();
+            updateChallenges('default');
+            
+            const mobileNav = document.getElementById('mobile-nav');
+            mobileNav.addEventListener('change', (e) => {
+                scrollToSection(e.target.value, null, true);
+            });
+        });
+
+        // --- GEMINI API HELPERS ---
+        async function callGemini(prompt, systemPrompt = "You are an expert Industrial Engineering consultant.") {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            // Exponential Backoff Logic
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            
+            for (let i = 0; i < delays.length; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+                } catch (error) {
+                    if (i === delays.length - 1) return `Error: Unable to connect to AI Consultant. Please try again later.`;
+                    await new Promise(r => setTimeout(r, delays[i]));
+                }
+            }
+        }
+
+        // --- AI FEATURE 1: FLOW DIAGNOSTICIAN ---
+        async function runAiDiagnosis() {
+            const inflow = document.getElementById('input-inflow').value;
+            const outflow = document.getElementById('input-outflow').value;
+            const resultDiv = document.getElementById('ai-diagnosis-result');
+            const spinner = document.getElementById('btn-spinner-1');
+
+            if (!inflow || !outflow) {
+                resultDiv.classList.remove('hidden');
+                resultDiv.innerHTML = "<strong>Please enter both Inflow and Outflow values.</strong>";
+                return;
+            }
+
+            spinner.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+
+            const prompt = `
+                I am an Industrial Engineering consultant.
+                Client Scenario:
+                - Production Inflow: ${inflow} units/day
+                - Sales Outflow: ${outflow} units/day
+                
+                Task:
+                1. Calculate the Delta (Inflow - Outflow).
+                2. If Delta > 0, diagnose as "Overproduction/Inventory Buildup". If Delta < 0, diagnose as "Stockout/Unmet Demand". If Delta = 0, congratulate on "Perfect Flow".
+                3. Provide 3 specific, actionable, bullet-pointed recommendations based on "Flow Thinking" principles to minimize waste and optimize profit for this specific scenario.
+                Keep the tone professional, analytical, and encouraging. Use HTML formatting (<b>, <ul>, <li>) for readability.
+            `;
+
+            const response = await callGemini(prompt);
+            
+            spinner.classList.add('hidden');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = response;
+        }
+
+        // --- AI FEATURE 2: OUTREACH GENERATOR ---
+        async function generateAiPitch() {
+            const sectorSelect = document.getElementById('sector-select');
+            const sectorName = sectorSelect.options[sectorSelect.selectedIndex].text;
+            const resultDiv = document.getElementById('ai-pitch-result');
+            const spinner = document.getElementById('btn-spinner-2');
+
+            // Get current challenge context
+            const challengeData = getChallengeData(sectorSelect.value);
+            const mainPainPoint = challengeData.points[0];
+
+            spinner.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+
+            const prompt = `
+                Write a cold LinkedIn connection message (max 100 words) from a 'Flow Thinking' consultant to a Plant Head in the ${sectorName} industry.
+                
+                Context:
+                - Their likely pain point: ${mainPainPoint}
+                - My Solution: 'Flow Thinking' (minimizing Inflow/Outflow delta).
+                
+                Goal: Get them to accept the connection or agree to a 15-min chat.
+                Tone: Professional, knowledgeable, not salesy. 
+                Structure: "Hi [Name], [Context about their industry pain], [My Solution], [Call to Action]."
+            `;
+
+            const response = await callGemini(prompt, "You are an expert copywriter for B2B industrial consulting.");
+            
+            spinner.classList.add('hidden');
+            resultDiv.classList.remove('hidden');
+            resultDiv.textContent = response;
+        }
+
+
+        // --- EXISTING APP LOGIC ---
+
+        function scrollToSection(id, element, isMobile = false) {
+            event.preventDefault();
+            const section = document.getElementById(id);
+            if (section) {
+                const yOffset = -70; 
+                const y = section.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                window.scrollTo({top: y, behavior: 'smooth'});
+            }
+            
+            if (!isMobile && element) {
+                document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+                element.classList.add('active');
+            }
+        }
+
+        const challengeDataRaw = {
+            'default': {
+                title: 'General Manufacturing Challenges',
+                points: [
+                    'High Work-in-Progress (WIP) inventory.',
+                    'Mismatch between production forecasts and actual sales.',
+                    'Supply chain disruptions causing stockouts or overstocking.',
+                    'Capital tied up in unsold finished goods.',
+                    'Lack of visibility into real-time production flow.'
+                ]
+            },
+            'auto': {
+                title: 'Automotive Sector Challenges',
+                points: [
+                    'Complex, multi-tier supply chains (JIT/JIS models).',
+                    'High cost of inventory for components.',
+                    'Production line imbalances and bottlenecks.',
+                    'Fluctuating demand based on new model launches.',
+                    'High WIP due to complex assembly processes.'
+                ]
+            },
+            'pharma': {
+                title: 'Pharmaceuticals Challenges',
+                points: [
+                    'Strict regulatory and compliance (batch tracking).',
+                    'High value of raw materials (APIs) and finished goods.',
+                    'Long R&D and production lead times.',
+                    'Cold chain and expiry date management.',
+                    'Balancing production for both stable and patented drugs.'
+                ]
+            },
+            'textiles': {
+                title: 'Textiles & Apparel Challenges',
+                points: [
+                    'Fast-fashion cycles leading to rapid demand shifts.',
+                    'High risk of obsolescence for finished goods.',
+                    'Long procurement lead times for raw materials.',
+                    'Managing a high SKU count (sizes, colors, styles).',
+                    'Batch processing creates flow bottlenecks.'
+                ]
+            },
+            'fmcg': {
+                title: 'FMCG Challenges',
+                points: [
+                    'High volume, low margin operations.',
+                    'Managing retailer/distributor inventory (bullwhip effect).',
+                    'Short shelf-life of products (outflow critical).',
+                    'Frequent changes in demand due to promotions.',
+                    'Optimizing production line changeover times.'
+                ]
+            },
+            'electronics': {
+                title: 'Electronics Challenges',
+                points: [
+                    'Rapid technological obsolescence of components.',
+                    'Global supply chain dependencies (e.g., semiconductors).',
+                    'High-value, delicate component inventory.',
+                    'Need for high-quality, zero-defect production flow.',
+                    'Managing complex Bill of Materials (BOMs).'
+                ]
+            }
+        };
+
+        function getChallengeData(sector) {
+            return challengeDataRaw[sector] || challengeDataRaw['default'];
+        }
+
+        function updateChallenges(sector) {
+            const data = getChallengeData(sector);
+            const container = document.getElementById('challenge-text');
+            
+            let pointsHtml = data.points.map(point => `<li class="text-stone-600">${point}</li>`).join('');
+            
+            container.innerHTML = `
+                <h4 class="text-lg font-semibold text-stone-800">${data.title}</h4>
+                <ul class="mt-2 list-disc list-inside space-y-1">
+                    ${pointsHtml}
+                </ul>
+            `;
+            
+            // Clear previous pitch when sector changes
+             document.getElementById('ai-pitch-result').classList.add('hidden');
+             document.getElementById('ai-pitch-result').textContent = '';
+        }
+        
+        document.getElementById('sector-select').addEventListener('change', (e) => {
+            updateChallenges(e.target.value);
+        });
+
+        function initMarketChart() {
+            const ctx = document.getElementById('marketChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Chemicals', 'Auto', 'Pharma', 'Food Proc.', 'Textiles', 'Electronics', 'Metals'],
+                    datasets: [{
+                        label: 'GVA Contribution (Illustrative %)',
+                        data: [18, 15, 12, 11, 9, 8, 27],
+                        backgroundColor: [
+                            'rgba(52, 211, 153, 0.6)',
+                            'rgba(16, 185, 129, 0.6)',
+                            'rgba(5, 150, 105, 0.6)',
+                            'rgba(2, 132, 199, 0.6)',
+                            'rgba(14, 165, 233, 0.6)',
+                            'rgba(56, 189, 248, 0.6)',
+                            'rgba(124, 58, 237, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(52, 211, 153, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(5, 150, 105, 1)',
+                            'rgba(2, 132, 199, 1)',
+                            'rgba(14, 165, 233, 1)',
+                            'rgba(56, 189, 248, 1)',
+                            'rgba(124, 58, 237, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'x',
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'GVA % (Illustrative)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function simulateFlow(state) {
+            const statusBox = document.getElementById('flow-status-box');
+            const statusTitle = document.getElementById('flow-status-title');
+            const statusDelta = document.getElementById('flow-status-delta');
+
+            statusBox.className = 'p-4 rounded-lg text-center w-full md:w-1/2 border-2 transition-all';
+            
+            if (state === 'over') {
+                statusBox.classList.add('bg-red-50', 'border-red-400', 'shadow-lg', 'scale-105');
+                statusTitle.textContent = 'STATE: OVERPRODUCTION';
+                statusDelta.textContent = 'Delta: POSITIVE (Waste)';
+            } else if (state === 'under') {
+                statusBox.classList.add('bg-amber-50', 'border-amber-400', 'shadow-lg', 'scale-105');
+                statusTitle.textContent = 'STATE: STOCKOUTS';
+                statusDelta.textContent = 'Delta: NEGATIVE (Waste)';
+            } else if (state === 'balanced') {
+                statusBox.classList.add('bg-green-50', 'border-green-400', 'shadow-lg', 'scale-105');
+                statusTitle.textContent = 'GOAL: BALANCED FLOW';
+                statusDelta.textContent = 'Delta: MINIMAL';
+            }
+        }
+
+        function changeTab(tabName) {
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.add('hidden');
+            });
+            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`tab-btn-${tabName}`).classList.add('active');
+        }
+
+        function toggleSwot(id) {
+            const body = document.getElementById(`swot-body-${id}`);
+            body.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
