@@ -9,10 +9,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Firebase Imports -->
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -55,31 +51,18 @@
         .swot-card-body {
             @apply px-4 pb-4 transition-all duration-300;
         }
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #059669;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body class="bg-stone-50 text-stone-800 antialiased">
 
     <!-- 
     Chosen Palette: Emerald & Stone
-    Application Structure Plan: A single-page, vertical-scrolling dashboard structure with a sticky navigation header. This design was chosen for its simplicity and directness, allowing the user (the consultant) to flow from one strategic section to the next: 1. Executive Summary, 2. The Core Niche ("Flow Thinking"), 3. The Target Market (Indian Manufacturing), 4. The Go-to-Market Strategy, and 5. The SWOT Analysis.
+    Application Structure Plan: A single-page, vertical-scrolling dashboard structure with a sticky navigation header. 
     
     Visualization & Content Choices:
     - Key Metrics (Section 1): Goal: Inform. Viz: Styled HTML cards. Interaction: None.
-    - "Flow Thinking" Diagram (Section 2): Goal: Organize/Explain + AI Interaction. Viz: HTML/CSS flexbox diagram + AI Form. Interaction: JS-driven simulation AND Gemini API "Diagnostician" to analyze custom Inflow/Outflow data. Justification: Moves from abstract simulation to concrete AI-powered advice.
-    - Market Sectors Chart (Section 3): Goal: Inform/Compare + AI Interaction. Viz: Chart.js Bar Chart. Interaction: Selector updates text AND Gemini API "Pitch Generator" drafts outreach emails. Justification: Turns market data into actionable sales assets immediately.
+    - "Flow Thinking" Diagram (Section 2): Goal: Organize/Explain. Viz: HTML/CSS flexbox diagram. Interaction: JS-driven simulation to visualize flow states (Over/Under/Balanced).
+    - Market Sectors Chart (Section 3): Goal: Inform/Compare. Viz: Chart.js Bar Chart. Interaction: Selector updates text description of sector challenges.
     - GTM Strategy (Section 4): Goal: Organize. Viz: HTML/CSS Tabbed interface. Interaction: Tab switching.
     - SWOT Analysis (Section 5): Goal: Organize/Inform. Viz: 2x2 HTML/CSS grid. Interaction: Toggles.
     
@@ -95,7 +78,7 @@
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4">
                         <a href="#home" class="nav-link active" onclick="scrollToSection('home', this)">Home</a>
-                        <a href="#niche" class="nav-link" onclick="scrollToSection('niche', this)">The Niche & AI</a>
+                        <a href="#niche" class="nav-link" onclick="scrollToSection('niche', this)">The Niche</a>
                         <a href="#market" class="nav-link" onclick="scrollToSection('market', this)">Market</a>
                         <a href="#gtm" class="nav-link" onclick="scrollToSection('gtm', this)">GTM Strategy</a>
                         <a href="#swot" class="nav-link" onclick="scrollToSection('swot', this)">SWOT</a>
@@ -160,39 +143,10 @@
                     </div>
                 </div>
 
-                <div class="mt-6 flex flex-wrap justify-center gap-4 border-b border-stone-200 pb-8">
+                <div class="mt-6 flex flex-wrap justify-center gap-4">
                     <button class="px-5 py-2 rounded-full bg-red-100 text-red-700 font-semibold text-sm hover:bg-red-200 transition-colors" onclick="simulateFlow('over')">Demo: Overproduction</button>
                     <button class="px-5 py-2 rounded-full bg-amber-100 text-amber-700 font-semibold text-sm hover:bg-amber-200 transition-colors" onclick="simulateFlow('under')">Demo: Stockouts</button>
                     <button class="px-5 py-2 rounded-full bg-emerald-100 text-emerald-700 font-semibold text-sm hover:bg-emerald-200 transition-colors" onclick="simulateFlow('balanced')">Demo: Balanced</button>
-                </div>
-
-                <!-- AI Feature Area -->
-                <div class="mt-8 bg-gradient-to-r from-emerald-50 to-stone-50 p-6 rounded-xl border border-emerald-100">
-                    <h3 class="text-xl font-bold text-emerald-800 mb-4 flex items-center gap-2">
-                        <span>✨</span> AI Flow Diagnostician
-                    </h3>
-                    <p class="text-sm text-stone-600 mb-4">Enter custom data below. The AI will analyze the "Delta" and provide a 3-step Industrial Engineering prescription.</p>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-stone-500 uppercase">Inflow (Units/Day)</label>
-                            <input type="number" id="input-inflow" placeholder="e.g. 1000" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-stone-500 uppercase">Outflow (Units/Day)</label>
-                            <input type="number" id="input-outflow" placeholder="e.g. 850" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm p-2 border">
-                        </div>
-                        <div class="flex items-end">
-                            <button onclick="runAiDiagnosis()" class="w-full bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 shadow-sm">
-                                <span id="btn-spinner-1" class="loader hidden"></span>
-                                <span>✨ Analyze Delta</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="ai-diagnosis-result" class="hidden bg-white p-4 rounded-lg border border-emerald-200 text-stone-700 text-sm leading-relaxed shadow-sm">
-                        <!-- AI content goes here -->
-                    </div>
                 </div>
             </div>
         </section>
@@ -200,7 +154,7 @@
         <section id="market">
             <div class="text-center">
                 <h2 class="text-3xl font-bold text-stone-900">Market Opportunity: Indian Manufacturing</h2>
-                <p class="mt-2 text-lg text-stone-600 max-w-3xl mx-auto">This section covers the target market. Explore sectors and use the AI tool to draft sector-specific outreach messages.</p>
+                <p class="mt-2 text-lg text-stone-600 max-w-3xl mx-auto">This section covers the target market. Explore sectors to understand specific "Flow" related challenges and identify your ideal client profile.</p>
             </div>
 
             <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -216,20 +170,7 @@
                         <option value="electronics">Electronics</option>
                     </select>
                     
-                    <div id="challenge-text" class="mt-6 p-4 bg-stone-50 rounded-lg min-h-[150px] text-sm mb-4">
-                    </div>
-
-                    <!-- AI Pitch Generator -->
-                    <div class="border-t border-stone-200 pt-4">
-                         <h4 class="text-sm font-bold text-stone-800 mb-2 flex items-center gap-2">
-                            <span>✨</span> Outreach Generator
-                        </h4>
-                        <p class="text-xs text-stone-500 mb-3">Generate a cold LinkedIn message for a Plant Head in this sector, focusing on the pain points above.</p>
-                        <button onclick="generateAiPitch()" class="w-full bg-stone-800 text-white px-4 py-2 rounded-md hover:bg-stone-900 transition-colors flex items-center justify-center gap-2 text-sm shadow-sm">
-                            <span id="btn-spinner-2" class="loader hidden"></span>
-                            <span>✨ Draft Pitch for Selected Sector</span>
-                        </button>
-                        <div id="ai-pitch-result" class="hidden mt-3 bg-stone-100 p-3 rounded border border-stone-200 font-mono text-xs text-stone-700 whitespace-pre-wrap"></div>
+                    <div id="challenge-text" class="mt-6 p-4 bg-stone-50 rounded-lg min-h-[150px] text-sm">
                     </div>
                 </div>
 
@@ -365,8 +306,6 @@
     </footer>
 
     <script>
-        const apiKey = ""; // Runtime-provided API key
-
         document.addEventListener('DOMContentLoaded', () => {
             initMarketChart();
             updateChallenges('default');
@@ -376,107 +315,6 @@
                 scrollToSection(e.target.value, null, true);
             });
         });
-
-        // --- GEMINI API HELPERS ---
-        async function callGemini(prompt, systemPrompt = "You are an expert Industrial Engineering consultant.") {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] }
-            };
-
-            // Exponential Backoff Logic
-            const delays = [1000, 2000, 4000, 8000, 16000];
-            
-            for (let i = 0; i < delays.length; i++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-                    
-                    const data = await response.json();
-                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
-                } catch (error) {
-                    if (i === delays.length - 1) return `Error: Unable to connect to AI Consultant. Please try again later.`;
-                    await new Promise(r => setTimeout(r, delays[i]));
-                }
-            }
-        }
-
-        // --- AI FEATURE 1: FLOW DIAGNOSTICIAN ---
-        async function runAiDiagnosis() {
-            const inflow = document.getElementById('input-inflow').value;
-            const outflow = document.getElementById('input-outflow').value;
-            const resultDiv = document.getElementById('ai-diagnosis-result');
-            const spinner = document.getElementById('btn-spinner-1');
-
-            if (!inflow || !outflow) {
-                resultDiv.classList.remove('hidden');
-                resultDiv.innerHTML = "<strong>Please enter both Inflow and Outflow values.</strong>";
-                return;
-            }
-
-            spinner.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
-
-            const prompt = `
-                I am an Industrial Engineering consultant.
-                Client Scenario:
-                - Production Inflow: ${inflow} units/day
-                - Sales Outflow: ${outflow} units/day
-                
-                Task:
-                1. Calculate the Delta (Inflow - Outflow).
-                2. If Delta > 0, diagnose as "Overproduction/Inventory Buildup". If Delta < 0, diagnose as "Stockout/Unmet Demand". If Delta = 0, congratulate on "Perfect Flow".
-                3. Provide 3 specific, actionable, bullet-pointed recommendations based on "Flow Thinking" principles to minimize waste and optimize profit for this specific scenario.
-                Keep the tone professional, analytical, and encouraging. Use HTML formatting (<b>, <ul>, <li>) for readability.
-            `;
-
-            const response = await callGemini(prompt);
-            
-            spinner.classList.add('hidden');
-            resultDiv.classList.remove('hidden');
-            resultDiv.innerHTML = response;
-        }
-
-        // --- AI FEATURE 2: OUTREACH GENERATOR ---
-        async function generateAiPitch() {
-            const sectorSelect = document.getElementById('sector-select');
-            const sectorName = sectorSelect.options[sectorSelect.selectedIndex].text;
-            const resultDiv = document.getElementById('ai-pitch-result');
-            const spinner = document.getElementById('btn-spinner-2');
-
-            // Get current challenge context
-            const challengeData = getChallengeData(sectorSelect.value);
-            const mainPainPoint = challengeData.points[0];
-
-            spinner.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
-
-            const prompt = `
-                Write a cold LinkedIn connection message (max 100 words) from a 'Flow Thinking' consultant to a Plant Head in the ${sectorName} industry.
-                
-                Context:
-                - Their likely pain point: ${mainPainPoint}
-                - My Solution: 'Flow Thinking' (minimizing Inflow/Outflow delta).
-                
-                Goal: Get them to accept the connection or agree to a 15-min chat.
-                Tone: Professional, knowledgeable, not salesy. 
-                Structure: "Hi [Name], [Context about their industry pain], [My Solution], [Call to Action]."
-            `;
-
-            const response = await callGemini(prompt, "You are an expert copywriter for B2B industrial consulting.");
-            
-            spinner.classList.add('hidden');
-            resultDiv.classList.remove('hidden');
-            resultDiv.textContent = response;
-        }
-
 
         // --- EXISTING APP LOGIC ---
 
@@ -574,10 +412,6 @@
                     ${pointsHtml}
                 </ul>
             `;
-            
-            // Clear previous pitch when sector changes
-             document.getElementById('ai-pitch-result').classList.add('hidden');
-             document.getElementById('ai-pitch-result').textContent = '';
         }
         
         document.getElementById('sector-select').addEventListener('change', (e) => {
